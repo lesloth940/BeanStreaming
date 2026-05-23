@@ -375,75 +375,50 @@ document.getElementById('btn-add-movie').addEventListener('click', async () => {
   }
 });
 
-    // --- APPLICATION STREAM RENDERING AGENT ---
-async function loadContent(userPlan) {
-  const container = document.getElementById('movie-container');
-  container.innerHTML = ''; 
+   // --- APPLICATION STREAM RENDERING AGENT ---
+    async function loadContent(userPlan) {
+      const container = document.getElementById('movie-container');
+      container.innerHTML = ''; 
 
-  try {
-    const querySnapshot = await getDocs(collection(db, "movies"));
-    
-    if (querySnapshot.empty) {
-      container.innerHTML = `<p style="color: var(--text-muted)">No movies found in the pipeline database. Upload some from the panel above!</p>`;
-      return;
-    }
+      try {
+        const querySnapshot = await getDocs(collection(db, "movies"));
+        
+        if (querySnapshot.empty) {
+          container.innerHTML = `<p style="color: var(--text-muted)">No movies found in the pipeline database. Upload some from the panel above!</p>`;
+          return;
+        }
 
-    // Custom text overlay for inactive accounts
-    if (userPlan === 'none') {
-      container.innerHTML = `
-        <div style="background: #1a1215; border: 1px solid #ff4757; padding: 20px; border-radius: 8px; text-align: center; grid-column: 1 / -1;">
-          <h3 style="color: #ff4757; margin-bottom: 8px;">Account Inactive</h3>
-          <p style="color: var(--text-muted);">Your account is currently pending activation. Please contact the administrator to choose a streaming plan.</p>
-        </div>
-      `;
-      return; // Stop execution here so no movies are drawn
-    }
+        // Custom text overlay for inactive accounts
+        if (userPlan === 'none') {
+          container.innerHTML = `
+            <div style="background: #1a1215; border: 1px solid #ff4757; padding: 20px; border-radius: 8px; text-align: center; grid-column: 1 / -1;">
+              <h3 style="color: #ff4757; margin-bottom: 8px;">Account Inactive</h3>
+              <p style="color: var(--text-muted);">Your account is currently pending activation. Please contact the administrator to choose a streaming plan.</p>
+            </div>
+          `;
+          return; // Stop execution here so no movies are drawn
+        }
 
-    querySnapshot.forEach((movieDoc) => {
-      const movie = movieDoc.data();
+        querySnapshot.forEach((movieDoc) => {
+          const movie = movieDoc.data();
 
-      // Strict Tier Enforcement:
-      // If they have a basic plan, they can ONLY see basic movies.
-      if (userPlan === 'basic' && movie.tier !== 'basic') {
-        return; 
-      }
+          // Strict Tier Enforcement: Basic accounts can ONLY see basic movies.
+          if (userPlan === 'basic' && movie.tier !== 'basic') {
+            return; 
+          }
 
-      const movieEl = document.createElement('div');
-      movieEl.className = 'movie-card';
-      movieEl.innerHTML = `
-        <div>
-          <span class="badge">${movie.tier}</span>
-          <h3 style="margin-top:10px; margin-bottom:8px;">${movie.title}</h3>
-          <p style="color:var(--text-muted); font-size:13px; line-height:1.4; margin-bottom: 20px;">
-            ${movie.description ? movie.description : 'No description provided.'}
-          </p>
-        </div>
-        <button class="play-trigger" style="margin:0; width:100%;">Watch Content</button>
-      `;
-
-      movieEl.querySelector('.play-trigger').addEventListener('click', () => {
-        launchVideoPlayer(movie.url);
-      });
-
-      container.appendChild(movieEl);
-    });
-  } catch (error) {
-    container.innerHTML = `<p style="color: var(--accent)">Error pulling catalog profiles: ${error.message}</p>`;
-  }
-}
-
-const movieEl = document.createElement('div');
-movieEl.className = 'movie-card';
-movieEl.innerHTML = `
-  <div>
-    <span class="badge">${movie.tier}</span>
-    <h3 style="margin-top:10px; margin-bottom:8px;">${movie.title}</h3>
-    <p style="color:var(--text-muted); font-size:13px; line-height:1.4; margin-bottom: 20px;">
-      ${movie.description ? movie.description : 'No description provided.'}
-    </p>
-  </div>
-  <button class="play-trigger" style="margin:0; width:100%;">Watch Content</button>
-`;
+          const movieEl = document.createElement('div');
+          movieEl.className = 'movie-card';
+          movieEl.innerHTML = `
+            <div>
+              <span class="badge">${movie.tier}</span>
+              <h3 style="margin-top:10px; margin-bottom:8px;">${movie.title}</h3>
+              <p style="color:var(--text-muted); font-size:13px; line-height:1.4; margin-bottom: 20px;">
+                ${movie.description ? movie.description : 'No description provided.'}
+              </p>
+            </div>
+            <button class="play-trigger" style="margin:0; width:100%;">Watch Content</button>
+          `;
 
           // Handle secure delivery streams to client presentation overlays
           movieEl.querySelector('.play-trigger').addEventListener('click', () => {
@@ -451,8 +426,8 @@ movieEl.innerHTML = `
           });
 
           container.appendChild(movieEl);
-        ;
-       catch (error) {
+        });
+      } catch (error) {
         container.innerHTML = `<p style="color: var(--accent)">Error pulling catalog profiles: ${error.message}</p>`;
       }
     }
