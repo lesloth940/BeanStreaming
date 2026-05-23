@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bean Streaming</title>
+  <style>
+    :root {
+      --bg: #0b0b0f;
+      --surface: #14141f;
+      --surface-accent: #222235;
+      --accent: #ff4757;
+      --accent-success: #2ed573;
+      --text: #ffffff;
+      --text-muted: #8f8f9e;
+    }
+
+    * { 
+      box-sizing: border-box; 
+      margin: 0; 
+      padding: 0; 
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
+    }
+
+    body { 
+      background: var(--bg); 
+      color: var(--text); 
+      padding: 20px;
+      min-height: 100vh;
+    }
+
+    .hidden { display: none !important; }
+    
+    /* Elegant Modern Cards */
+    .card {
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 40px;
+      max-width: 420px;
+      margin: 80px auto;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+      border: 1px solid #222232;
+    }
+
+    h1, h2, h3, h4 { font-weight: 700; letter-spacing: -0.5px; }
+    h2 { margin-bottom: 24px; }
+    
+    input, select, button {
+      width: 100%; 
+      padding: 14px; 
+      margin-bottom: 16px;
+      border-radius: 8px; 
+      border: none; 
+      outline: none;
+      font-size: 15px;
+    }
+
+    input, select { 
+      background: var(--surface-accent); 
+      color: #fff; 
+      transition: background 0.2s;
+    }
+
+    input:focus {
+      background: #2b2b40;
+    }
+
+    button { 
+      background: var(--accent); 
+      color: white; 
+      font-weight: 600; 
+      cursor: pointer; 
+      transition: opacity 0.2s, transform 0.1s; 
+    }
+
+    button:hover { opacity: 0.9; }
+    button:active { transform: scale(0.98); }
+
+    /* App Workspace layout */
+    .navbar { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      padding-bottom: 20px; 
+      margin-bottom: 40px;
+      border-bottom: 1px solid var(--surface-accent); 
+    }
+
+    .brand {
+      font-size: 28px;
+      background: linear-gradient(45deg, #ff4757, #ff6b81);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .movie-grid { 
+      display: grid; 
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
+      gap: 24px; 
+      margin-top: 24px; 
+    }
+
+    .movie-card { 
+      background: var(--surface); 
+      border-radius: 12px; 
+      padding: 20px; 
+      position: relative;
+      border: 1px solid #1e1e2d;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .badge { 
+      position: absolute; 
+      top: 15px; 
+      right: 15px; 
+      background: rgba(255, 71, 87, 0.2); 
+      color: var(--accent);
+      padding: 4px 10px; 
+      border-radius: 20px; 
+      font-size: 11px; 
+      font-weight: 700; 
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    /* Double Panel Admin View */
+    .admin-panel { 
+      border-left: 4px solid var(--accent); 
+      border-radius: 8px; 
+      padding: 24px; 
+      margin-bottom: 40px; 
+      background: #191216; 
+    }
+
+    .admin-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+      margin-top: 15px;
+    }
+
+    .admin-box {
+      background: rgba(0, 0, 0, 0.2);
+      padding: 16px;
+      border-radius: 8px;
+    }
+
+    hr {
+      border: 0;
+      height: 1px;
+      background: var(--surface-accent);
+      margin: 20px 0;
+    }
+
+    /* Simple Modern Video Modal */
+    .modal {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.9); display: flex; align-items: center;
+      justify-content: center; z-index: 1000;
+    }
+    .modal-content {
+      width: 90%; max-width: 800px; background: #000; border-radius: 12px; overflow: hidden;
+    }
+    video { width: 100%; display: block; }
+  </style>
+</head>
+<body>
+
+  <div id="auth-screen" class="card">
+    <h2 id="auth-title" style="text-align: center;">Bean Streaming ☕</h2>
+    <input type="text" id="auth-username" placeholder="Username">
+    <input type="password" id="auth-password" placeholder="Password">
+    <button id="btn-login">Sign In</button>
+    <button id="btn-signup" style="background: transparent; color: var(--text-muted); margin-bottom: 0;">Create New Account</button>
+  </div>
+
+  <div id="app-screen" class="hidden">
+    <div class="navbar">
+      <div class="brand">Bean.</div>
+      <div>
+        <span id="user-display" style="margin-right: 20px; font-weight: 500; font-size: 14px;"></span>
+        <button id="btn-logout" style="width: auto; display: inline-block; padding: 10px 20px; background: var(--surface-accent);">Logout</button>
+      </div>
+    </div>
+
+    <div id="admin-section" class="admin-panel hidden">
+      <h3 style="color: var(--accent)">System Operator Dashboard</h3>
+      <div class="admin-grid">
+        <div class="admin-box">
+          <h4 style="margin-bottom: 12px;">Modify User Permissions</h4>
+          <input type="text" id="target-uid" placeholder="User Unique ID (UID)">
+          <select id="target-plan">
+            <option value="basic">Basic Tier</option>
+            <option value="pro">Pro Tier</option>
+            <option value="admin">System Admin</option>
+          </select>
+          <button id="btn-update-user">Save Plan Settings</button>
+        </div>
+        
+        <div class="admin-box">
+          <h4 style="margin-bottom: 12px;">Publish New Content</h4>
+          <input type="text" id="movie-title" placeholder="Movie Title">
+          <input type="text" id="movie-url" placeholder="Stream Target URL (.mp4 / stream path)">
+          <select id="movie-tier">
+            <option value="basic">Standard Access (Basic)</option>
+            <option value="pro">Premium Access (Pro Only)</option>
+          </select>
+          <button id="btn-add-movie" style="background: var(--accent-success);">Publish Content</button>
+        </div>
+      </div>
+    </div>
+
+    <h2>Featured Catalog</h2>
+    <div class="movie-grid" id="movie-container"></div>
+  </div>
+
+  <div id="video-modal" class="modal hidden">
+    <div class="modal-content">
+      <video id="video-player" controls autoplay controlsList="nodownload"></video>
+      <button id="btn-close-modal" style="margin: 0; border-radius: 0; background: #222;">Close Player</button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+    // Production configuration details mapped straight to your project
+    const firebaseConfig = {
+      apiKey: "AIzaSyArlGSEm5DOCbAc1xv2GlY3VcwHrs5Ybi8",
+      authDomain: "bean-streaming.firebaseapp.com",
+      projectId: "bean-streaming",
+      storageBucket: "bean-streaming.firebasestorage.app",
+      messagingSenderId: "444821022999",
+      appId: "1:444821022999:web:a64edce8035e3bde7baf52",
+      measurementId: "G-NCW88QCSJ8"
+    };
+
+    // Spin up application services
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // Formats raw text strings into compliant auth identifier strings
+    function formatEmail(username) {
+      return `${username.trim().toLowerCase()}@bean.internal`;
+    }
+
+    // --- ACCESS LOGIC FLOWS ---
+
+    // Signup Event Handler
+    document.getElementById('btn-signup').addEventListener('click', async () => {
+      const username = document.getElementById('auth-username').value.trim();
+      const password = document.getElementById('auth-password').value;
+
+      if(!username || !password) return alert("Please populate all authorization parameters.");
+
+      try {
+        const email = formatEmail(username);
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+
+        // Custom condition intercepting target administrative properties configuration
+        let assignedPlan = "basic";
+        if (username.toLowerCase() === 'beans' && password === '101912') {
+          assignedPlan = "admin";
+        }
+
+        // Establish core security parameters inside target database reference mapping
+        await setDoc(doc(db, "users", user.uid), {
+          username: username,
+          plan: assignedPlan
+        });
+
+        alert("Account processing completed!");
+      } catch (error) {
+        alert(error.message);
+      }
+    });
+
+    // Signin Event Handler
+    document.getElementById('btn-login').addEventListener('click', async () => {
+      const username = document.getElementById('auth-username').value.trim();
+      const password = document.getElementById('auth-password').value;
+
+      if(!username || !password) return alert("Please enter your credentials.");
+
+      try {
+        const email = formatEmail(username);
+        await signInWithEmailAndPassword(auth, email, password);
+      } catch (error) {
+        alert("Authentication failed: " + error.message);
+      }
+    });
+
+    // Universal Logout Action Trigger
+    document.getElementById('btn-logout').addEventListener('click', () => {
+      signOut(auth);
+    });
+
+    // --- COMPONENT PIPELINE EVENT LISTENER ---
+    onAuthStateChanged(auth, async (user) => {
+      const authScreen = document.getElementById('auth-screen');
+      const appScreen = document.getElementById('app-screen');
+      const adminSection = document.getElementById('admin-section');
+
+      if (user) {
+        authScreen.classList.add('hidden');
+        appScreen.classList.remove('hidden');
+
+        // Fetch database parameters
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          document.getElementById('user-display').innerHTML = `Hi, <b>${userData.username}</b> <span style="color:var(--accent)">(${userData.plan.toUpperCase()})</span> <small style="font-size:10px; color:var(--text-muted)">ID: ${user.uid}</small>`;
+
+          if (userData.plan === 'admin') {
+            adminSection.classList.remove('hidden');
+          } else {
+            adminSection.classList.add('hidden');
+          }
+
+          loadContent(userData.plan);
+        }
+      } else {
+        authScreen.classList.remove('hidden');
+        appScreen.classList.add('hidden');
+        adminSection.classList.add('hidden');
+      }
+    });
+
+    // --- ADMINISTRATIVE OPERATIONS ---
+    
+    // Membership Status Modification Action
+    document.getElementById('btn-update-user').addEventListener('click', async () => {
+      const targetUid = document.getElementById('target-uid').value.trim();
+      const newPlan = document.getElementById('target-plan').value;
+
+      if(!targetUid) return alert("Target operational user entity identifier must be specified.");
+
+      try {
+        await updateDoc(doc(db, "users", targetUid), { plan: newPlan });
+        alert(`Membership status modified cleanly to: ${newPlan.toUpperCase()}`);
+      } catch (error) {
+        alert("Database transaction failure: " + error.message);
+      }
+    });
+
+    // Dynamic Database Content Creator Form Action
+    document.getElementById('btn-add-movie').addEventListener('click', async () => {
+      const title = document.getElementById('movie-title').value.trim();
+      const url = document.getElementById('movie-url').value.trim();
+      const tier = document.getElementById('movie-tier').value;
+
+      if (!title || !url) return alert("Please specify valid contextual title and distribution tracks.");
+
+      try {
+        await addDoc(collection(db, "movies"), { title, url, tier });
+        alert(`"${title}" published onto target distribution pipeline matching parameters successfully.`);
+        
+        // Reset local elements
+        document.getElementById('movie-title').value = '';
+        document.getElementById('movie-url').value = '';
+        loadContent('admin');
+      } catch (error) {
+        alert("Transaction dropped out: " + error.message);
+      }
+    });
+
+    // --- APPLICATION STREAM RENDERING AGENT ---
+    async function loadContent(userPlan) {
+      const container = document.getElementById('movie-container');
+      container.innerHTML = ''; 
+
+      try {
+        const querySnapshot = await getDocs(collection(db, "movies"));
+        
+        if (querySnapshot.empty) {
+          container.innerHTML = `<p style="color: var(--text-muted)">No movies found in the pipeline database. Upload some from the panel above!</p>`;
+          return;
+        }
+
+        querySnapshot.forEach((movieDoc) => {
+          const movie = movieDoc.data();
+
+          // Rule implementation evaluation: Basic users cannot bypass metadata profile constraints
+          if (userPlan === 'basic' && movie.tier === 'pro') {
+            return; 
+          }
+
+          const movieEl = document.createElement('div');
+          movieEl.className = 'movie-card';
+          movieEl.innerHTML = `
+            <div>
+              <span class="badge">${movie.tier}</span>
+              <h3 style="margin-top:10px; margin-bottom:8px;">${movie.title}</h3>
+              <p style="color:var(--text-muted); font-size:13px; line-height:1.4; margin-bottom: 20px;">Ready for immediate deployment processing across high fidelity streaming framework profiles.</p>
+            </div>
+            <button class="play-trigger" style="margin:0; width:100%;">Watch Content</button>
+          `;
+
+          // Handle secure delivery streams to client presentation overlays
+          movieEl.querySelector('.play-trigger').addEventListener('click', () => {
+            launchVideoPlayer(movie.url);
+          });
+
+          container.appendChild(movieEl);
+        });
+      } catch (error) {
+        container.innerHTML = `<p style="color: var(--accent)">Error pulling catalog profiles: ${error.message}</p>`;
+      }
+    }
+
+    // --- DISPLAY / VIDEO MODAL CONTROLLER PIPELINES ---
+    const videoModal = document.getElementById('video-modal');
+    const videoPlayer = document.getElementById('video-player');
+
+    function launchVideoPlayer(streamUrl) {
+      videoPlayer.src = streamUrl;
+      videoModal.classList.remove('hidden');
+      videoPlayer.play();
+    }
+
+    document.getElementById('btn-close-modal').addEventListener('click', () => {
+      videoPlayer.pause();
+      videoPlayer.src = ""; // Flush current playback buffering tracks
+      videoModal.classList.add('hidden');
+    });
+  </script>
+</body>
+</html>
