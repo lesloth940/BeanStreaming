@@ -264,7 +264,7 @@
         const user = userCredential.user;
 
         // Custom condition intercepting target administrative properties configuration
-        let assignedPlan = "basic";
+        let assignedPlan = "none";
         if (username.toLowerCase() === 'beans' && password === '101912') {
           assignedPlan = "admin";
         }
