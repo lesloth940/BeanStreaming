@@ -351,25 +351,29 @@
     });
 
     // Dynamic Database Content Creator Form Action
-    document.getElementById('btn-add-movie').addEventListener('click', async () => {
-      const title = document.getElementById('movie-title').value.trim();
-      const url = document.getElementById('movie-url').value.trim();
-      const tier = document.getElementById('movie-tier').value;
+// Dynamic Database Content Creator Form Action
+document.getElementById('btn-add-movie').addEventListener('click', async () => {
+  const title = document.getElementById('movie-title').value.trim();
+  const description = document.getElementById('movie-description').value.trim(); // NEW
+  const url = document.getElementById('movie-url').value.trim();
+  const tier = document.getElementById('movie-tier').value;
 
-      if (!title || !url) return alert("Please specify valid contextual title and distribution tracks.");
+  if (!title || !url) return alert("Please specify valid contextual title and distribution tracks.");
 
-      try {
-        await addDoc(collection(db, "movies"), { title, url, tier });
-        alert(`"${title}" published onto target distribution pipeline matching parameters successfully.`);
-        
-        // Reset local elements
-        document.getElementById('movie-title').value = '';
-        document.getElementById('movie-url').value = '';
-        loadContent('admin');
-      } catch (error) {
-        alert("Transaction dropped out: " + error.message);
-      }
-    });
+  try {
+    // Added description to the saved database object
+    await addDoc(collection(db, "movies"), { title, description, url, tier });
+    alert(`"${title}" published onto target distribution pipeline matching parameters successfully.`);
+    
+    // Reset local elements
+    document.getElementById('movie-title').value = '';
+    document.getElementById('movie-description').value = ''; // NEW
+    document.getElementById('movie-url').value = '';
+    loadContent('admin');
+  } catch (error) {
+    alert("Transaction dropped out: " + error.message);
+  }
+});
 
     // --- APPLICATION STREAM RENDERING AGENT ---
     async function loadContent(userPlan) {
@@ -392,16 +396,18 @@
             return; 
           }
 
-          const movieEl = document.createElement('div');
-          movieEl.className = 'movie-card';
-          movieEl.innerHTML = `
-            <div>
-              <span class="badge">${movie.tier}</span>
-              <h3 style="margin-top:10px; margin-bottom:8px;">${movie.title}</h3>
-              <p style="color:var(--text-muted); font-size:13px; line-height:1.4; margin-bottom: 20px;">Ready for immediate deployment processing across high fidelity streaming framework profiles.</p>
-            </div>
-            <button class="play-trigger" style="margin:0; width:100%;">Watch Content</button>
-          `;
+const movieEl = document.createElement('div');
+movieEl.className = 'movie-card';
+movieEl.innerHTML = `
+  <div>
+    <span class="badge">${movie.tier}</span>
+    <h3 style="margin-top:10px; margin-bottom:8px;">${movie.title}</h3>
+    <p style="color:var(--text-muted); font-size:13px; line-height:1.4; margin-bottom: 20px;">
+      ${movie.description ? movie.description : 'No description provided.'}
+    </p>
+  </div>
+  <button class="play-trigger" style="margin:0; width:100%;">Watch Content</button>
+`;
 
           // Handle secure delivery streams to client presentation overlays
           movieEl.querySelector('.play-trigger').addEventListener('click', () => {
